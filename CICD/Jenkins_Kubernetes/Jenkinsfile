@@ -4,6 +4,8 @@ pipeline {
     options {
         skipStagesAfterUnstable()
     }
+     environment {
+    }
     stages {
          stage('Clone repository') { 
             steps { 
@@ -16,7 +18,7 @@ pipeline {
         stage('Build') { 
             steps { 
                 script{
-                 app = docker.build("backend")
+                 app = docker.build("backend:V$BUILD_NUMBER")
                 }
             }
         }
@@ -25,22 +27,30 @@ pipeline {
                  echo 'Empty'
             }
         }
-        stage('Deploy') {
+        stage('Upload Image') {
             steps {
                 script{
-                        docker.withRegistry('https://869704295115.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:aws-credentials') {
-                    app.push("${env.BUILD_NUMBER}")
+                        docker.withRegistry('', 'dockerhub') {
+                    app.push("V$BUILD_NUMBER")
                     app.push("latest")
                     }
                 }
             }
         }
-           stage('Deploy to ECS') {
+        
+        stage('Remove Unused docker image') {
             steps {
-                withAWS(credentials : 'aws-credentials', region : "us-east-1") {
-                    sh "aws ecs update-service  --cluster backend --service backend --force-new-deployment"
+                script{
+                    sh "docker rmi backend:V$BUILD_NUMBER"
+                    }
                 }
             }
+        
+         stage('Deploy Helm chart') {
+            steps {
+                sh "helm upgrade --install --force backend helm/backend --set appimage=backend:V$BUILD_NUMBER"
+            }
+        }
         }
     }
 }

@@ -3,11 +3,12 @@ import {
   SubscribeMessage,
   WebSocketServer,
   ConnectedSocket,
-} from '@nestjs/websockets';
+} from "@nestjs/websockets";
+import { Socket } from "socket.io";
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: "*",
   },
 })
 export class ChatGateway {
@@ -17,15 +18,21 @@ export class ChatGateway {
 
   socketToUser = [];
 
-  @SubscribeMessage('whoOnline')
+  @SubscribeMessage("whoOnline")
   async whoIsOnline() {
     return this.socketToUser;
   }
 
-  @SubscribeMessage('joinSocket')
+  @SubscribeMessage("joinSocket")
   async joinRoom(@ConnectedSocket() client) {
-    console.log('joined client', client.id);
+    console.log("joined client", client.id);
     this.socketToUser.push(client.id);
     return client.id;
+  }
+  handleConnection(client: Socket) {
+    client.on("disconnecting", async (reason) => {
+      console.log("disconnect ", client.id);
+      this.socketToUser = this.socketToUser.filter((c) => c != client.id);
+    });
   }
 }

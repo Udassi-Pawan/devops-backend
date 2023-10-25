@@ -22,9 +22,15 @@ let ChatGateway = class ChatGateway {
         return this.socketToUser;
     }
     async joinRoom(client) {
-        console.log('joined client', client.id);
+        console.log("joined client", client.id);
         this.socketToUser.push(client.id);
         return client.id;
+    }
+    handleConnection(client) {
+        client.on("disconnecting", async (reason) => {
+            console.log("disconnect ", client.id);
+            this.socketToUser = this.socketToUser.filter((c) => c != client.id);
+        });
     }
 };
 exports.ChatGateway = ChatGateway;
@@ -33,13 +39,13 @@ __decorate([
     __metadata("design:type", Object)
 ], ChatGateway.prototype, "server", void 0);
 __decorate([
-    (0, websockets_1.SubscribeMessage)('whoOnline'),
+    (0, websockets_1.SubscribeMessage)("whoOnline"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], ChatGateway.prototype, "whoIsOnline", null);
 __decorate([
-    (0, websockets_1.SubscribeMessage)('joinSocket'),
+    (0, websockets_1.SubscribeMessage)("joinSocket"),
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -48,7 +54,7 @@ __decorate([
 exports.ChatGateway = ChatGateway = __decorate([
     (0, websockets_1.WebSocketGateway)({
         cors: {
-            origin: '*',
+            origin: "*",
         },
     }),
     __metadata("design:paramtypes", [])
