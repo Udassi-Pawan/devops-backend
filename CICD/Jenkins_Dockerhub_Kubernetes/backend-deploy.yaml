@@ -20,5 +20,3 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 3333
-          env:
-            - name: MONGO_PASS
