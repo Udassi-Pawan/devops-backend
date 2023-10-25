@@ -17,6 +17,7 @@ spec:
       containers:
         - name: backend
           image: udassi/backend
+          imagePullPolicy: Always
           ports:
             - containerPort: 3333
           env:

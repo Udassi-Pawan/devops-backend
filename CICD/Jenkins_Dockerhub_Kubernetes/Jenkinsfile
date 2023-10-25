@@ -4,8 +4,7 @@ pipeline {
     options {
         skipStagesAfterUnstable()
     }
-     environment {
-    }
+   
     stages {
          stage('Clone repository') { 
             steps { 
@@ -18,7 +17,7 @@ pipeline {
         stage('Build') { 
             steps { 
                 script{
-                 app = docker.build("backend:V$BUILD_NUMBER")
+                 app = docker.build("udassi/backend")
                 }
             }
         }
@@ -41,16 +40,20 @@ pipeline {
         stage('Remove Unused docker image') {
             steps {
                 script{
-                    sh "docker rmi backend:V$BUILD_NUMBER"
+                    sh "docker rmi udassi/backend"
                     }
                 }
             }
-        
-         stage('Deploy Helm chart') {
+            
+            stage('Deploy New Image') {
+            agent {
+                label 'kops' // Specify the agent label only for this stage
+            }
             steps {
-                sh "helm upgrade --install --force backend helm/backend --set appimage=backend:V$BUILD_NUMBER"
+                script { 
+                       sh "kubectl rollout restart deployment backend-deployment"   
+                }
+            }
             }
         }
-        }
     }
-}
