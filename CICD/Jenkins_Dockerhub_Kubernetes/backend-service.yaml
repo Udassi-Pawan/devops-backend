@@ -9,4 +9,4 @@ spec:
     - port: 80
       targetPort: 3333
       protocol: TCP
-  type: LoadBalancer
+  type: ClusterIP
