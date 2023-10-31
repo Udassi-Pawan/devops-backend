@@ -1,0 +1,57 @@
+name: Publish Docker image
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build_and_push:
+    name: Build image and push to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v1
+        with:
+          images: udassi/backend
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: udassi/backend:latest
+          labels: udassi/backend:latest
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Configure Kubectl
+        uses: azure/setup-kubectl@v2.0
+        with:
+          version: "v1.23.6"
+        id: install
+
+      - name: Update KubeConfig
+        shell: bash
+        run: |
+          aws eks --region us-east-1 update-kubeconfig --name devops2
+
+      - name: Deploy
+        run: |
+          kubectl rollout restart deployment/backend-deployment
